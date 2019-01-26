@@ -1,60 +1,41 @@
 package com.cottagecoders;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.TreeSet;
 
 public class LogSplitter {
 
   LogSplitter() {
 
-    // gather all the start options
-
-    // for now remove the "output" subdirectory
-
-    // gather the sdc.log files
-
-
-    // sort set.
-
-    // reverse set.
-
   }
 
   public static void main(String[] args) {
 
-    Set<String> fileNames = new TreeSet<>();
+    TreeSet<Path> fileNames;
 
     LogSplitter logSplitter = new LogSplitter();
     fileNames = logSplitter.gatherFileNames();
-    logSplitter.reverseSort(fileNames);
 
     Parser parser = new Parser();
-    for (String inputFileName : fileNames) {
+    for (Path inputFileName : fileNames.descendingSet()) {
       parser.parse(inputFileName);
     }
     parser.closeAll();
   }
 
-  void reverseSort(Set<String> fileNames) {
-
-  }
-
-  void start() {
-    // process each file, they'll be in reverse order.
-
-    // we find the oldest log records at the top of the last file.
-
-  }
-
-  }
-
-  Set<String> gatherFileNames() {
-
+  TreeSet<Path> gatherFileNames() {
+    TreeSet<Path> fileNames = new TreeSet<>();
+    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get("."), "sdc.log*")) {
+      dirStream.forEach(path -> fileNames.add(path));
+    } catch (IOException ex) {
+      System.out.println("Exception: " + ex.getMessage());
+      ex.printStackTrace();
+      System.exit(27);
+    }
+    return fileNames;
   }
 }
