@@ -11,9 +11,9 @@ import java.nio.file.Paths;
 import java.util.TreeSet;
 
 public class LogSplitter {
-  public static final String OUTPUT_DIR = "./out/";
+  static final String OUTPUT_DIR = "./out/";
 
-  LogSplitter() {
+  private LogSplitter() {
 
   }
 
@@ -26,14 +26,14 @@ public class LogSplitter {
     // wipe out directory and contents.
     try {
       FileUtils.deleteDirectory(new File(OUTPUT_DIR));
-    }catch(IOException ex) {
+    } catch (IOException ex) {
       System.out.println("deleteDirectory " + OUTPUT_DIR + " " + ex.getMessage());
     }
 
     // create directory...
     try {
       FileUtils.forceMkdir(new File(OUTPUT_DIR));
-    } catch(IOException ex) {
+    } catch (IOException ex) {
       System.out.println("forceMkdir " + OUTPUT_DIR + " " + ex.getMessage());
     }
 
@@ -44,10 +44,17 @@ public class LogSplitter {
     parser.closeAll();
   }
 
-  TreeSet<Path> gatherFileNames() {
+  /**
+   * gather the file names which match our file specification and put them into a <code>TreeSet</code>
+   *
+   * @return
+   */
+  private TreeSet<Path> gatherFileNames() {
     TreeSet<Path> fileNames = new TreeSet<>();
-    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get("."), "sdc.log*")) {
-      dirStream.forEach(path -> fileNames.add(path));
+    try {
+      DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get("."), "sdc.log*");
+      dirStream.forEach(fileNames::add);
+
     } catch (IOException ex) {
       System.out.println("Exception: " + ex.getMessage());
       ex.printStackTrace();
