@@ -46,9 +46,9 @@ public class Parser {
         if (matcher.matches()) {
 
           // scrub bad chars from pipeline name...
-          String pipeline = matcher.group(4).replaceAll("[^a-zA-Z0-9]", "_");
+          String pipeline = matcher.group(4).replaceAll("[^-a-zA-Z0-9_]", "_");
           // is the pipeline name empty?
-          if (StringUtils.isEmpty(pipeline)) {
+          if (StringUtils.isEmpty(pipeline) || pipeline.equals("_")) {
             continue;
           }
 
