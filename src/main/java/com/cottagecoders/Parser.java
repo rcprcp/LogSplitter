@@ -1,5 +1,7 @@
 package com.cottagecoders;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -11,9 +13,16 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.cottagecoders.LogSplitter.OUTPUT_DIR;
+
 public class Parser {
   private static final String regex = "(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2},\\d{3}) \\[user:(.*)\\] " +
+      "\\[pipeline:(.*)\\] \\[runner:] (.*)$";
+  private static final String SAVEDregex = "(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2},\\d{3}) \\[user:(.*)\\] " +
       "\\[pipeline:(.*)" + "\\] " + "\\[runner:\\d+] \\[thread:(.*)\\](.*)$";
+
+  private static final String NEWregex = "(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2},\\d{3}) \\[user:(.*)\\] " +
+      "\\[(.*)\\]" + "\\[runner:\\d+] \\[thread:(.*)\\](.*)$";
 
   final Pattern pattern = Pattern.compile(regex);
 
@@ -24,25 +33,27 @@ public class Parser {
   }
 
   void parse(Path inputFile) {
-    // open the input file name
+
+    // open the input file...
     try (BufferedReader brdr = new BufferedReader(new FileReader(inputFile.toFile()))) {
       String record;
+
+      BufferedWriter currentWriter = null;
       while ((record = brdr.readLine()) != null) {
-        // parse the line...
+
         final Matcher matcher = pattern.matcher(record);
-        // is this a log4j record?  get the pipeline name, maybe open a file...
+
         if (matcher.matches()) {
-          System.out.println("group 1" +matcher.group(1));
-          System.out.println("group 2" +matcher.group(2));
-          System.out.println("group 3" +matcher.group(3));
-          System.out.println("group 4" +matcher.group(4));
-          System.exit(1);
 
-          // scrub bad chars from pipeline name.
-          String pName = matcher.group(4).replaceAll("[^a-zA-Z0-9-_]", "");
-          String destinationFileName = pName + ".log";
+          // scrub bad chars from pipeline name...
+          String pipeline = matcher.group(4).replaceAll("[^a-zA-Z0-9]", "_");
+          // is the pipeline name empty?
+          if (StringUtils.isEmpty(pipeline)) {
+            continue;
+          }
 
-          BufferedWriter currentWriter = null;
+          String destinationFileName = OUTPUT_DIR + pipeline + ".log";
+
           if (!fds.containsKey(destinationFileName)) {
             fds.put(destinationFileName, new BufferedWriter(new FileWriter(destinationFileName)));
             currentWriter = fds.get(destinationFileName);
@@ -51,11 +62,9 @@ public class Parser {
               currentWriter = fds.get(destinationFileName);
             }
           }
-          currentWriter.write(record+"\n");
 
-        } else {
-          System.out.println("no match " + record);
         }
+        currentWriter.write(record + "\n");
       }
     } catch (IOException ex) {
       System.out.println("Exception: " + ex.getMessage());
